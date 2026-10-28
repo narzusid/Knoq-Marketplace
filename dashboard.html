@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Knoq</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+</head>
+<body class="bg-[#F4F6F9] text-[#0A192F] font-sans flex flex-col min-h-screen">
+    <div id="root" class="flex-1 flex flex-col"></div>
+
+    <script type="text/babel">
+        function DashboardApp() {
+            const [currentUser, setCurrentUser] = React.useState(null);
+            const [skills, setSkills] = React.useState([]);
+            const [exchangeRequests, setExchangeRequests] = React.useState([]);
+            const [isEditingProfile, setIsEditingProfile] = React.useState(false);
+            const [profileForm, setProfileForm] = React.useState({ name: '', institution: '', bio: '' });
+            const [showAddSkillModal, setShowAddSkillModal] = React.useState(false);
+            const [newSkillForm, setNewSkillForm] = React.useState({
+                name: '',
+                role: 'Verified Instructor & Learner',
+                category: 'Computer Science',
+                teach: '',
+                learn: '',
+                credits: '1 Credit/hr',
+                rating: '5.0',
+                reviews: '0',
+                avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&q=80',
+                bio: 'Passionate community member ready to exchange knowledge.'
+            });
+
+            const fetchData = () => {
+                const savedUser = localStorage.getItem('knoq_user');
+                if (savedUser) {
+                    const parsedUser = JSON.parse(savedUser);
+                    setCurrentUser(parsedUser);
+                    setProfileForm({ name: parsedUser.name, institution: parsedUser.institution || '', bio: parsedUser.bio || '' });
+                    setNewSkillForm(prev => ({ ...prev, name: parsedUser.name, bio: parsedUser.bio || '' }));
+                }
+
+                fetch('http://localhost:5000/api/skills')
+                    .then(res => res.json())
+                    .then(data => setSkills(data))
+                    .catch(err => console.error('Error fetching skills:', err));
+
+                fetch('http://localhost:5000/api/requests')
+                    .then(res => res.json())
+                    .then(data => setExchangeRequests(data))
+                    .catch(err => console.error('Error fetching requests:', err));
+            };
+
+            React.useEffect(() => {
+                fetchData();
+            }, []);
+
+            const handleProfileUpdate = (e) => {
+                e.preventDefault();
+                fetch('http://localhost:5000/api/user/update', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: currentUser.email, ...profileForm })
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.error) {
+                        alert(data.error);
+                    } else {
+                        setCurrentUser(data.user);
+                        localStorage.setItem('knoq_user', JSON.stringify(data.user));
+                        setIsEditingProfile(false);
+                        alert(data.message);
+                    }
+                })
+                .catch(err => console.error('Error updating profile:', err));
+            };
+
+            const handleAddSkillSubmit = (e) => {
+                e.preventDefault();
+                fetch('http://localhost:5000/api/skills', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(newSkillForm)
+                })
+                .then(res => res.json())
+                .then(data => {
+                    alert(data.message);
+                    setShowAddSkillModal(false);
+                    setNewSkillForm(prev => ({ ...prev, teach: '', learn: '', bio: '' }));
+                    fetchData();
+                })
+                .catch(err => console.error('Error adding skill:', err));
+            };
+
+            const handleUpdateRequestStatus = (requestId, status) => {
+                fetch('http://localhost:5000/api/requests/update', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ requestId, status })
+                })
+                .then(res => res.json())
+                .then(data => {
+                    alert(data.message);
+                    if (status === 'Accepted') {
+                        const updatedUser = { ...currentUser, credits: currentUser.credits + 1 };
+                        setCurrentUser(updatedUser);
+                        localStorage.setItem('knoq_user', JSON.stringify(updatedUser));
+                    }
+                    fetchData();
+                })
+                .catch(err => console.error('Error updating status:', err));
+            };
+
+            const handleLogout = () => {
+                localStorage.removeItem('knoq_user');
+                window.location.href = 'index.html';
+            };
+
+            return (
+                <div className="flex flex-col min-h-screen bg-[#F4F6F9]">
+                    {/* Navigation Bar */}
+                    <nav className="bg-white/90 backdrop-blur-md border-b border-slate-200 px-8 py-4 flex justify-between items-center sticky top-0 z-50 shadow-sm">
+                        <a href="index.html" className="flex items-center cursor-pointer select-none">
+                            <span className="text-2xl font-black tracking-tight text-[#0A192F]">Kn</span>
+                            <span className="text-2xl font-black tracking-tight text-[#38BDF8] mx-0.5">o</span>
+                            <span className="text-2xl font-black tracking-tight text-[#0A192F]">q</span>
+                        </a>
+                        <div className="flex items-center gap-6 font-medium text-sm text-slate-600">
+                            <a href="index.html" className="hover:text-[#0A192F] transition">Home</a>
+                            <a href="explore.html" className="hover:text-[#0A192F] transition">Explore Skills</a>
+                            <a href="dashboard.html" className="text-[#0A192F] font-bold">Dashboard</a>
+                            <a href="messages.html" className="hover:text-[#0A192F] transition">Messages</a>
+
+                            {currentUser ? (
+                                <div className="flex items-center gap-4">
+                                    <span className="bg-emerald-600 text-white px-4 py-2 rounded-xl font-bold text-xs">
+                                        👤 {currentUser.name}
+                                    </span>
+                                    <button onClick={handleLogout} className="text-xs font-bold text-rose-600 hover:underline">
+                                        Log Out
+                                    </button>
+                                </div>
+                            ) : (
+                                <a href="signup.html" className="bg-[#0284C7] hover:bg-[#0369A1] text-white px-5 py-2.5 rounded-xl font-bold shadow-lg transition">Sign Up</a>
+                            )}
+                        </div>
+                    </nav>
+
+                    {/* Main Content */}
+                    <main className="px-8 py-10 max-w-7xl mx-auto w-full flex-1">
+                        {currentUser ? (
+                            <div className="space-y-8">
+                                {/* Header Section */}
+                                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                                    <div>
+                                        <h2 className="text-2xl font-black text-[#0A192F]">Welcome back, {currentUser.name}!</h2>
+                                        <p className="text-slate-500 text-sm mt-0.5">Manage your time-banking credits and active skill exchanges.</p>
+                                    </div>
+                                    <button onClick={() => setShowAddSkillModal(true)} className="bg-[#0284C7] hover:bg-[#0369A1] text-white font-bold px-5 py-2.5 rounded-xl shadow-md transition text-sm">
+                                        + List New Skill
+                                    </button>
+                                </div>
+
+                                {/* Clean Stats Cards without Icons */}
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                    <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                                        <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Wallet Balance</p>
+                                        <h3 className="text-3xl font-black text-[#0A192F] mt-1">{currentUser.credits} Credits</h3>
+                                    </div>
+                                    <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                                        <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Active Requests</p>
+                                        <h3 className="text-3xl font-black text-[#0A192F] mt-1">
+                                            {exchangeRequests.filter(r => r.sender === currentUser.name || r.receiver === currentUser.name).length} Total
+                                        </h3>
+                                    </div>
+                                    <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                                        <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Exchange Rule</p>
+                                        <h3 className="text-xl font-black text-[#0A192F] mt-1">1 Credit = 1 Hour</h3>
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                                    {/* Profile Card */}
+                                    <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm lg:col-span-1 h-fit">
+                                        <div className="text-center pb-6 border-b border-slate-100">
+                                            <div className="w-16 h-16 bg-[#0A192F] text-white font-bold text-xl rounded-2xl flex items-center justify-center mx-auto mb-3 shadow-inner">
+                                                {currentUser.name.slice(0, 2).toUpperCase()}
+                                            </div>
+                                            <h3 className="font-bold text-lg text-[#0A192F]">{currentUser.name}</h3>
+                                            <p className="text-xs text-slate-400 mt-0.5">{currentUser.email}</p>
+                                        </div>
+
+                                        {!isEditingProfile ? (
+                                            <div className="py-4 space-y-3 text-sm text-slate-600">
+                                                <div>
+                                                    <span className="text-[11px] font-bold text-slate-400 uppercase">Institution</span>
+                                                    <p className="font-medium text-[#0A192F]">{currentUser.institution || 'Not Specified'}</p>
+                                                </div>
+                                                <div>
+                                                    <span className="text-[11px] font-bold text-slate-400 uppercase">Bio</span>
+                                                    <p className="font-medium text-[#0A192F] text-xs leading-relaxed">{currentUser.bio}</p>
+                                                </div>
+                                                <button onClick={() => setIsEditingProfile(true)} className="w-full mt-4 bg-slate-100 hover:bg-slate-200 text-[#0A192F] font-bold py-2.5 rounded-xl transition text-xs">
+                                                    Edit Profile Settings
+                                                </button>
+                                            </div>
+                                        ) : (
+                                            <form onSubmit={handleProfileUpdate} className="py-4 space-y-3 text-sm">
+                                                <div>
+                                                    <label className="block text-[11px] font-bold text-slate-400 uppercase mb-1">Full Name</label>
+                                                    <input type="text" value={profileForm.name} onChange={(e) => setProfileForm({...profileForm, name: e.target.value})} className="w-full px-3 py-2 border rounded-xl text-xs" required />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-[11px] font-bold text-slate-400 uppercase mb-1">Institution</label>
+                                                    <input type="text" value={profileForm.institution} onChange={(e) => setProfileForm({...profileForm, institution: e.target.value})} className="w-full px-3 py-2 border rounded-xl text-xs" />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-[11px] font-bold text-slate-400 uppercase mb-1">Bio</label>
+                                                    <textarea rows="2" value={profileForm.bio} onChange={(e) => setProfileForm({...profileForm, bio: e.target.value})} className="w-full px-3 py-2 border rounded-xl text-xs"></textarea>
+                                                </div>
+                                                <div className="flex gap-2 pt-2">
+                                                    <button type="submit" className="flex-1 bg-[#0284C7] text-white font-bold py-2 rounded-xl text-xs">Save</button>
+                                                    <button type="button" onClick={() => setIsEditingProfile(false)} className="flex-1 bg-slate-100 text-slate-700 font-bold py-2 rounded-xl text-xs">Cancel</button>
+                                                </div>
+                                            </form>
+                                        )}
+
+                                        <button onClick={handleLogout} className="w-full mt-2 bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold py-2.5 rounded-xl transition text-xs">
+                                            Log Out
+                                        </button>
+                                    </div>
+
+                                    {/* Right Section: Listed Services & Session History Ledger */}
+                                    <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm lg:col-span-2 space-y-8">
+                                        <div>
+                                            <h3 className="font-bold text-base text-[#0A192F] mb-4">My Listed Services</h3>
+                                            <div className="space-y-3">
+                                                {skills.filter(s => s.name === currentUser.name).length === 0 ? (
+                                                    <p className="text-slate-400 text-xs">You haven't listed any skills yet. Click "+ List New Skill" above.</p>
+                                                ) : (
+                                                    skills.filter(s => s.name === currentUser.name).map((s, idx) => (
+                                                        <div key={idx} className="p-4 bg-slate-50/70 rounded-xl border border-slate-100 flex items-center justify-between text-sm">
+                                                            <div>
+                                                                <span className="text-[10px] font-bold bg-sky-100 text-sky-800 px-2 py-0.5 rounded">{s.category}</span>
+                                                                <h4 className="font-bold text-[#0A192F] text-sm mt-1">Teaches: {s.teach}</h4>
+                                                                <p className="text-xs text-slate-500">Wants: {s.learn}</p>
+                                                            </div>
+                                                            <span className="text-xs font-bold text-slate-600 bg-white border border-slate-200 px-3 py-1 rounded-lg">Active (1 Hr)</span>
+                                                        </div>
+                                                    ))
+                                                )}
+                                            </div>
+                                        </div>
+
+                                        <div>
+                                            <h3 className="font-bold text-base text-[#0A192F] mb-4">Session & Credit History Ledger</h3>
+                                            <div className="space-y-3">
+                                                {exchangeRequests.filter(r => r.sender === currentUser.name || r.receiver === currentUser.name).length === 0 ? (
+                                                    <p className="text-slate-400 text-xs">No session exchange history yet.</p>
+                                                ) : (
+                                                    exchangeRequests
+                                                        .filter(r => r.sender === currentUser.name || r.receiver === currentUser.name)
+                                                        .map((req, idx) => (
+                                                            <div key={idx} className="p-4 bg-slate-50/70 border border-slate-100 rounded-xl flex items-center justify-between text-sm">
+                                                                <div>
+                                                                    <p className="font-bold text-[#0A192F] text-xs">
+                                                                        {req.sender === currentUser.name ? `Session request sent to ${req.receiver}` : `Session request received from ${req.sender}`}
+                                                                    </p>
+                                                                    <p className="text-xs text-slate-600 mt-0.5">Skill Topic: {req.skillTitle}</p>
+                                                                    <span className="text-[11px] text-slate-400 block mt-1">Duration: 1 Hour Session</span>
+                                                                </div>
+                                                                
+                                                                <div className="flex items-center gap-3">
+                                                                    <span className={`px-3 py-1 font-bold text-xs rounded-lg ${req.status === 'Accepted' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}`}>
+                                                                        {req.status === 'Accepted' ? 'Completed (±1 Cr)' : req.status}
+                                                                    </span>
+                                                                    {req.receiver === currentUser.name && req.status === 'Pending' && (
+                                                                        <button onClick={() => handleUpdateRequestStatus(req._id, 'Accepted')} className="bg-[#0A192F] hover:bg-[#1E293B] text-white text-xs font-bold px-3 py-1.5 rounded-lg transition">
+                                                                            Accept Session
+                                                                        </button>
+                                                                    )}
+                                                                </div>
+                                                            </div>
+                                                        ))
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="text-center py-20 bg-white rounded-2xl border border-slate-200 p-8 max-w-lg mx-auto shadow-sm my-12">
+                                <h3 className="text-2xl font-black text-[#0A192F] mb-2">Access Your Dashboard</h3>
+                                <p className="text-slate-600 text-sm mb-6">Please log in to manage your time credits and active sessions.</p>
+                                <a href="signup.html" className="bg-[#0284C7] text-white font-bold px-6 py-3 rounded-xl transition text-sm inline-block">
+                                    Log In / Register Now
+                                </a>
+                            </div>
+                        )}
+                    </main>
+
+                    {/* Add Skill Modal */}
+                    {showAddSkillModal && (
+                        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex justify-center items-center p-4">
+                            <div className="bg-white rounded-2xl shadow-xl max-w-lg w-full p-6 relative">
+                                <h3 className="text-xl font-black text-[#0A192F] mb-4">List a New Skill (1 Hour Session)</h3>
+                                <form onSubmit={handleAddSkillSubmit} className="space-y-4">
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Instructor Name</label>
+                                            <input type="text" value={newSkillForm.name} readOnly className="w-full px-3 py-2 border rounded-xl text-sm bg-slate-100 font-bold" />
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Category</label>
+                                            <select value={newSkillForm.category} onChange={(e) => setNewSkillForm({...newSkillForm, category: e.target.value})} className="w-full px-3 py-2 border rounded-xl text-sm bg-white">
+                                                <option>Computer Science</option>
+                                                <option>Programming</option>
+                                                <option>Design</option>
+                                                <option>Languages</option>
+                                                <option>Marketing</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Skill You Teach</label>
+                                        <input type="text" placeholder="e.g. Operating Systems" value={newSkillForm.teach} onChange={(e) => setNewSkillForm({...newSkillForm, teach: e.target.value})} className="w-full px-3 py-2 border rounded-xl text-sm" required />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Skill You Want to Learn</label>
+                                        <input type="text" placeholder="e.g. React.js" value={newSkillForm.learn} onChange={(e) => setNewSkillForm({...newSkillForm, learn: e.target.value})} className="w-full px-3 py-2 border rounded-xl text-sm" required />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Bio</label>
+                                        <textarea rows="2" placeholder="Describe your session..." value={newSkillForm.bio} onChange={(e) => setNewSkillForm({...newSkillForm, bio: e.target.value})} className="w-full px-3 py-2 border rounded-xl text-sm" required></textarea>
+                                    </div>
+                                    <div className="flex gap-3 justify-end pt-2">
+                                        <button type="button" onClick={() => setShowAddSkillModal(false)} className="px-4 py-2 bg-slate-100 rounded-xl text-sm font-bold">Cancel</button>
+                                        <button type="submit" className="px-6 py-2 bg-[#0284C7] text-white rounded-xl text-sm font-bold">Publish Listing</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Footer */}
+                    <footer className="bg-[#0A192F] text-slate-300 py-6 text-center text-xs text-slate-500 border-t border-slate-800">
+                        © 2026 Knoq Marketplace. All rights reserved.
+                    </footer>
+                </div>
+            );
+        }
+        ReactDOM.createRoot(document.getElementById('root')).render(<DashboardApp />);
+    </script>
+</body>
+</html>

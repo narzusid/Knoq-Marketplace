@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Authentication - Knoq</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+</head>
+<body class="bg-[#F4F6F9] text-[#0A192F] font-sans flex flex-col min-h-screen">
+    <div id="root" class="flex-1 flex flex-col"></div>
+
+    <script type="text/babel">
+        function AuthApp() {
+            const [authMode, setAuthMode] = React.useState('signup');
+            const [authForm, setAuthForm] = React.useState({ name: '', email: '', password: '', institution: '' });
+            const [showPassword, setShowPassword] = React.useState(false); // 👈 পাসওয়ার্ড শো/হাইড স্টেট
+
+            const handleAuthSubmit = (e) => {
+                e.preventDefault();
+                const endpoint = authMode === 'signup' ? 'http://localhost:5000/api/signup' : 'http://localhost:5000/api/login';
+                
+                fetch(endpoint, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(authForm)
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.error) {
+                        alert(data.error);
+                    } else {
+                        localStorage.setItem('knoq_user', JSON.stringify(data.user));
+                        alert(data.message);
+                        window.location.href = 'dashboard.html';
+                    }
+                })
+                .catch(err => console.error('Auth error:', err));
+            };
+
+            return (
+                <div className="flex flex-col min-h-screen justify-between">
+                    {/* Navigation Bar */}
+                    <nav className="bg-white/90 backdrop-blur-md border-b border-slate-200 px-8 py-4 flex justify-between items-center shadow-sm">
+                        <a href="index.html" className="flex items-center cursor-pointer select-none">
+                            <span className="text-2xl font-black tracking-tight text-[#0A192F]">Kn</span>
+                            <span className="text-2xl font-black tracking-tight text-[#38BDF8] mx-0.5">o</span>
+                            <span className="text-2xl font-black tracking-tight text-[#0A192F]">q</span>
+                        </a>
+                        <div className="flex items-center gap-6 font-medium text-sm text-slate-600">
+                            <a href="index.html" className="hover:text-[#0A192F] transition">Home</a>
+                            <a href="explore.html" className="hover:text-[#0A192F] transition">Explore Skills</a>
+                        </div>
+                    </nav>
+
+                    {/* Form Container */}
+                    <main className="flex justify-center items-center px-4 py-16 flex-1">
+                        <div className="bg-white p-8 rounded-2xl border border-slate-200 shadow-lg max-w-md w-full">
+                            <div className="text-center mb-6">
+                                <h2 className="text-2xl font-black text-[#0A192F]">
+                                    {authMode === 'signup' ? 'Create Your Account' : 'Welcome Back to Knoq'}
+                                </h2>
+                                <p className="text-slate-500 text-sm mt-1">Sign up to get 2 free credits instantly!</p>
+                            </div>
+
+                            <form onSubmit={handleAuthSubmit} className="space-y-4">
+                                {authMode === 'signup' && (
+                                    <div>
+                                        <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Full Name</label>
+                                        <input type="text" required value={authForm.name} onChange={(e) => setAuthForm({...authForm, name: e.target.value})} placeholder="Enter your full name" className="w-full px-4 py-3 border rounded-xl text-sm" />
+                                    </div>
+                                )}
+                                <div>
+                                    <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Email Address</label>
+                                    <input type="email" required value={authForm.email} onChange={(e) => setAuthForm({...authForm, email: e.target.value})} placeholder="user@example.com" className="w-full px-4 py-3 border rounded-xl text-sm" />
+                                </div>
+
+                                {/* 👈 পাসওয়ার্ড ফিল্ড উইথ শো/হাইড বাটন */}
+                                <div>
+                                    <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Password</label>
+                                    <div className="relative">
+                                        <input 
+                                            type={showPassword ? "text" : "password"} 
+                                            required 
+                                            value={authForm.password} 
+                                            onChange={(e) => setAuthForm({...authForm, password: e.target.value})} 
+                                            placeholder="••••••••" 
+                                            className="w-full px-4 py-3 border rounded-xl text-sm pr-12" 
+                                        />
+                                        <button 
+                                            type="button" 
+                                            onClick={() => setShowPassword(!showPassword)}
+                                            className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-500 hover:text-[#0A192F]"
+                                        >
+                                            {showPassword ? "Hide" : "Show"}
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {authMode === 'signup' && (
+                                    <div>
+                                        <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Institution</label>
+                                        <input type="text" value={authForm.institution} onChange={(e) => setAuthForm({...authForm, institution: e.target.value})} placeholder="Your institution name" className="w-full px-4 py-3 border rounded-xl text-sm" />
+                                    </div>
+                                )}
+                                <button type="submit" className="w-full bg-[#0284C7] hover:bg-[#0369A1] text-white font-bold py-3 rounded-xl transition text-sm mt-2">
+                                    {authMode === 'signup' ? 'Create Account (Get 2 Free Credits)' : 'Log In'}
+                                </button>
+                            </form>
+
+                            <div className="text-center mt-6 text-sm text-slate-600">
+                                {authMode === 'signup' ? (
+                                    <p>Already have an account? <button onClick={() => setAuthMode('login')} className="text-[#0284C7] font-bold hover:underline">Log In</button></p>
+                                ) : (
+                                    <p>Don't have an account? <button onClick={() => setAuthMode('signup')} className="text-[#0284C7] font-bold hover:underline">Sign Up</button></p>
+                                )}
+                            </div>
+                        </div>
+                    </main>
+
+                    {/* Footer */}
+                    <footer className="bg-[#0A192F] text-slate-300 py-6 text-center text-xs text-slate-500 border-t border-slate-800">
+                        © 2026 Knoq Marketplace. All rights reserved.
+                    </footer>
+                </div>
+            );
+        }
+        ReactDOM.createRoot(document.getElementById('root')).render(<AuthApp />);
+    </script>
+</body>
+</html>
