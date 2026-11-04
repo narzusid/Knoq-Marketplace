@@ -33,6 +33,7 @@
                 bio: 'Passionate community member ready to exchange knowledge.'
             });
 
+            // Fetching user data, skills, and requests from backend API
             const fetchData = () => {
                 const savedUser = localStorage.getItem('knoq_user');
                 if (savedUser) {
@@ -42,12 +43,13 @@
                     setNewSkillForm(prev => ({ ...prev, name: parsedUser.name, bio: parsedUser.bio || '' }));
                 }
 
-                fetch('http://localhost:5000/api/skills')
+                // Updated to use relative API endpoint for Render deployment compatibility
+                fetch('/api/skills')
                     .then(res => res.json())
                     .then(data => setSkills(data))
                     .catch(err => console.error('Error fetching skills:', err));
 
-                fetch('http://localhost:5000/api/requests')
+                fetch('/api/requests')
                     .then(res => res.json())
                     .then(data => setExchangeRequests(data))
                     .catch(err => console.error('Error fetching requests:', err));
@@ -59,7 +61,7 @@
 
             const handleProfileUpdate = (e) => {
                 e.preventDefault();
-                fetch('http://localhost:5000/api/user/update', {
+                fetch('/api/user/update', {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ email: currentUser.email, ...profileForm })
@@ -80,7 +82,7 @@
 
             const handleAddSkillSubmit = (e) => {
                 e.preventDefault();
-                fetch('http://localhost:5000/api/skills', {
+                fetch('/api/skills', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(newSkillForm)
@@ -96,7 +98,7 @@
             };
 
             const handleUpdateRequestStatus = (requestId, status) => {
-                fetch('http://localhost:5000/api/requests/update', {
+                fetch('/api/requests/update', {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ requestId, status })
@@ -164,7 +166,7 @@
                                     </button>
                                 </div>
 
-                                {/* Clean Stats Cards without Icons */}
+                                {/* Clean Stats Cards */}
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                                     <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
                                         <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Wallet Balance</p>

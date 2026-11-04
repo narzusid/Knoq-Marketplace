@@ -37,14 +37,14 @@
                 }
             }, []);
 
-            // Fetch Messages and Requests periodically for real-time feel
+            // Fetch Messages and Requests periodically for real-time feel using relative API routes
             const fetchData = () => {
-                fetch('http://localhost:5000/api/messages')
+                fetch('/api/messages')
                     .then(res => res.json())
                     .then(data => setMessages(data))
                     .catch(err => console.error('Error fetching messages:', err));
 
-                fetch('http://localhost:5000/api/requests')
+                fetch('/api/requests')
                     .then(res => res.json())
                     .then(data => setExchangeRequests(data))
                     .catch(err => console.error('Error fetching requests:', err));
@@ -80,7 +80,7 @@
                     text: inputText
                 };
 
-                fetch('http://localhost:5000/api/messages', {
+                fetch('/api/messages', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)

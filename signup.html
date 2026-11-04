@@ -16,11 +16,12 @@
         function AuthApp() {
             const [authMode, setAuthMode] = React.useState('signup');
             const [authForm, setAuthForm] = React.useState({ name: '', email: '', password: '', institution: '' });
-            const [showPassword, setShowPassword] = React.useState(false); // 👈 পাসওয়ার্ড শো/হাইড স্টেট
+            const [showPassword, setShowPassword] = React.useState(false);
 
             const handleAuthSubmit = (e) => {
                 e.preventDefault();
-                const endpoint = authMode === 'signup' ? 'http://localhost:5000/api/signup' : 'http://localhost:5000/api/login';
+                // Updated to use relative API endpoints for Render deployment compatibility
+                const endpoint = authMode === 'signup' ? '/api/signup' : '/api/login';
                 
                 fetch(endpoint, {
                     method: 'POST',
@@ -77,7 +78,7 @@
                                     <input type="email" required value={authForm.email} onChange={(e) => setAuthForm({...authForm, email: e.target.value})} placeholder="user@example.com" className="w-full px-4 py-3 border rounded-xl text-sm" />
                                 </div>
 
-                                {/* 👈 পাসওয়ার্ড ফিল্ড উইথ শো/হাইড বাটন */}
+                                {/* Password field with show/hide toggle */}
                                 <div>
                                     <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Password</label>
                                     <div className="relative">

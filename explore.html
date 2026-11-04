@@ -26,8 +26,7 @@
                     setCurrentUser(JSON.parse(savedUser));
                 }
 
-                // Fetching skills data from relative API route
-                fetch('/api/skills')
+                fetch('http://localhost:5000/api/skills')
                     .then(res => res.json())
                     .then(data => {
                         setSkills(data);
@@ -41,7 +40,7 @@
 
             const categories = ['All', 'Computer Science', 'Programming', 'Design', 'Languages', 'Marketing'];
             
-            // Filtering skills based on category and search query
+            // ক্যাটাগরি এবং সার্চ কুয়েরি ফিল্টারিং
             const filteredSkills = skills.filter(s => {
                 const matchesCategory = selectedCategory === 'All' || s.category === selectedCategory;
                 const matchesSearch = s.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
@@ -105,7 +104,7 @@
                             <h2 className="text-3xl font-black text-[#0A192F] mb-2">Explore Available Skills</h2>
                             <p className="text-slate-600 mb-6">Discover expert mentors ready to exchange knowledge.</p>
                             
-                            {/* Search Input Bar */}
+                            {/* সার্চ বার ইনপুট */}
                             <div className="max-w-md mx-auto mb-6">
                                 <input 
                                     type="text" 
@@ -167,7 +166,7 @@
                         )}
                     </main>
 
-                    {/* Footer Section */}
+                    {/* Footer */}
                     <footer className="bg-[#0A192F] text-slate-300 py-12 px-8 mt-20 border-t border-slate-800">
                         <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
                             <div>
