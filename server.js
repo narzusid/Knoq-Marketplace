@@ -2,10 +2,14 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const bcrypt = require('bcrypt');
+const path = require('path');
 
 const app = express();
 app.use(express.json());
 app.use(cors());
+
+// --- STATIC FILES MIDDLEWARE (To fix Cannot GET / error on Render/Local) ---
+app.use(express.static(path.join(__dirname)));
 
 // MongoDB Connection (Cloud Atlas & Local Fallback)
 const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/knoq_marketplace';
