@@ -7,8 +7,10 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
-// Local MongoDB Connection
-mongoose.connect('mongodb://localhost:27017/knoq_marketplace')
+// MongoDB Connection (Cloud Atlas & Local Fallback)
+const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/knoq_marketplace';
+
+mongoose.connect(MONGO_URI)
   .then(() => console.log("✅ MongoDB Connected Successfully"))
   .catch(err => console.log("DB Connection Error: ", err));
 
@@ -289,6 +291,7 @@ app.post('/api/reviews', async (req, res) => {
     }
 });
 
-app.listen(5000, () => {
-    console.log("🚀 Server running on port 5000");
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => {
+    console.log(`🚀 Server running on port ${PORT}`);
 });
